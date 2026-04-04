@@ -1,0 +1,61 @@
+{
+  "id": "sr6-qualities-compendium",
+  "title": "SR6 Core Qualities",
+  "description": "Compendium of positive and negative qualities from the Shadowrun 6th Edition core rulebook, ready to drag onto character sheets.",
+  "version": "1.0.0",
+  "authors": [
+    {
+      "name": "jcmurray"
+    }
+  ],
+  "compatibility": {
+    "minimum": "12",
+    "verified": "12",
+    "maximum": "13"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "shadowrun6-eden",
+        "type": "system",
+        "compatibility": {}
+      }
+    ]
+  },
+  "esmodules": [
+    "scripts/main.js"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "packs": [
+    {
+      "name": "positive-qualities",
+      "label": "SR6 Positive Qualities",
+      "path": "packs/positive-qualities",
+      "type": "Item",
+      "system": "shadowrun6-eden"
+    },
+    {
+      "name": "negative-qualities",
+      "label": "SR6 Negative Qualities",
+      "path": "packs/negative-qualities",
+      "type": "Item",
+      "system": "shadowrun6-eden"
+    }
+  ],
+  "packFolders": [
+    {
+      "name": "SR6 Core Qualities",
+      "color": "#2ecc71",
+      "packs": [
+        "positive-qualities",
+        "negative-qualities"
+      ]
+    }
+  ]
+}
