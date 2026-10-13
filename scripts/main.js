@@ -2,8 +2,9 @@ const MODULE_ID = "sr6-qualities-compendium";
 
 // ── Helper to build an ActiveEffect change ──────────────────────────
 function ae(key, value, mode = 2) {
-  // mode 2 = CONST.ACTIVE_EFFECT_MODES.ADD
-  return { key, value: String(value), mode };
+  // mode 2 = ADD (Foundry 13). Foundry 14 uses the string type "add" instead; each core drops the field it does not know,
+  // so the definition carries both and effectDataForCore() below picks the right shape when the item is created.
+  return { key, value: String(value), mode, type: "add" };
 }
 
 // ── Helper to build a quality item ──────────────────────────────────
@@ -40,7 +41,7 @@ function quality(name, {
   if (effects.length > 0) {
     item.effects = [{
       name: `${name} Effect`,
-      icon: item.img,
+      img: item.img,
       changes: effects,
       disabled: false,
       transfer: true,
@@ -95,12 +96,14 @@ async function syncLeveledEffect(item) {
   const effect = item.effects?.contents?.[0];
   if (!effect) return;
 
-  const currentChange = effect.changes?.[0];
+  // Foundry 14 stores an effect's changes in system.changes (type "add"); Foundry 13 in changes (mode 2)
+  const onV14 = Array.isArray(effect.system?.changes);
+  const currentChange = (onV14 ? effect.system.changes : effect.changes)?.[0];
   if (currentChange && currentChange.value === targetValue) return; // already correct
 
-  await effect.update({
-    changes: [{ key: config.key, value: targetValue, mode: 2 }],
-  });
+  await effect.update(onV14
+    ? { "system.changes": [{ key: config.key, value: targetValue, type: "add" }] }
+    : { changes: [{ key: config.key, value: targetValue, mode: 2 }] });
   console.log(`${MODULE_ID} | Synced ${item.name} effect: ${config.key} = ${targetValue}`);
 }
 
@@ -627,6 +630,21 @@ const QUALITIES = {
 
 // ── Compendium population ───────────────────────────────────────────
 
+/**
+ * Effect data in the shape the running core wants. The definitions use the root `changes` array (with both `mode` and `type`),
+ * which Foundry 14 still migrates but with a compatibility warning for every created item; on 14 write `system.changes` directly.
+ */
+function effectDataForCore(itemData) {
+  if (!(game.release?.generation >= 14) || !itemData.effects?.length) return itemData;
+  return {
+    ...itemData,
+    effects: itemData.effects.map(({ changes, ...effect }) => ({
+      ...effect,
+      system: { changes: (changes ?? []).map(({ mode, ...change }) => ({ ...change, type: change.type ?? "add" })) },
+    })),
+  };
+}
+
 async function populateCompendium(packName, items) {
   const packKey = `${MODULE_ID}.${packName}`;
   const pack = game.packs.get(packKey);
@@ -646,7 +664,7 @@ async function populateCompendium(packName, items) {
 
     for (const itemData of items) {
       if (existingNames.has(itemData.name)) continue;
-      await Item.create(itemData, { pack: packKey });
+      await Item.create(effectDataForCore(itemData), { pack: packKey });
       console.log(`${MODULE_ID} | Created: ${itemData.name} in ${packName}`);
     }
   } finally {

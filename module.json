@@ -2,18 +2,17 @@
   "id": "sr6-qualities-compendium",
   "title": "SR6 Core Qualities",
   "description": "Compendium of positive and negative qualities from the Shadowrun 6th Edition core rulebook, ready to drag onto character sheets.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "manifest": "https://github.com/techno-savant/sr6-qualities-compendium/releases/latest/download/module.json",
-  "download": "https://github.com/techno-savant/sr6-qualities-compendium/releases/download/v1.0.0/sr6-qualities-compendium-v1.0.0.zip",
+  "download": "https://github.com/techno-savant/sr6-qualities-compendium/releases/download/v1.1.0/sr6-qualities-compendium-v1.1.0.zip",
   "authors": [
     {
       "name": "jcmurray"
     }
   ],
   "compatibility": {
-    "minimum": "12",
-    "verified": "12",
-    "maximum": "13"
+    "minimum": "13",
+    "verified": "14.369"
   },
   "relationships": {
     "systems": [
