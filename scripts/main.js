@@ -654,22 +654,31 @@ async function populateCompendium(packName, items) {
   }
 
   const wasLocked = pack.locked;
-  if (wasLocked) {
-    await pack.configure({ locked: false });
-  }
+  const isLocked = () => game.compendiumConfiguration?.[packKey]?.locked ?? pack.locked;
+  // Foundry's configure() writes the whole world "compendiumConfiguration" setting from a client-side copy, so another module that
+  // unlocks or relocks its own pack at the same moment (sr6-qualities-compendium does) can overwrite our unlock. Check the live
+  // setting before each try and unlock again if it was lost.
+  const unlock = async () => { if (isLocked()) await pack.configure({ locked: false }); };
 
   try {
+    await unlock();
     const existing = await pack.getDocuments();
     const existingNames = new Set(existing.map((i) => i.name));
-
-    for (const itemData of items) {
-      if (existingNames.has(itemData.name)) continue;
-      await Item.create(effectDataForCore(itemData), { pack: packKey });
-      console.log(`${MODULE_ID} | Created: ${itemData.name} in ${packName}`);
+    const missing = items.filter((itemData) => !existingNames.has(itemData.name));
+    for (let attempt = 1; missing.length; attempt++) {
+      try {
+        await unlock();
+        await Item.createDocuments(missing.map(effectDataForCore), { pack: packKey });
+        console.log(`${MODULE_ID} | Created ${missing.length} items in ${packName}`);
+        break;
+      } catch (error) {
+        if (attempt >= 5 || !/locked compendium/i.test(String(error?.message))) throw error;
+        await new Promise((resolve) => setTimeout(resolve, 200 + Math.random() * 600));
+      }
     }
   } finally {
     if (wasLocked) {
-      await pack.configure({ locked: true });
+      try { await pack.configure({ locked: true }); } catch (error) { console.warn(`${MODULE_ID} | Could not relock ${packName}:`, error); }
     }
   }
 }
