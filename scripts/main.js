@@ -678,7 +678,14 @@ async function populateCompendium(packName, items) {
     }
   } finally {
     if (wasLocked) {
-      try { await pack.configure({ locked: true }); } catch (error) { console.warn(`${MODULE_ID} | Could not relock ${packName}:`, error); }
+      // A late stale write from the other module can undo the relock, so look again after a short pause and relock if needed.
+      for (let check = 0; check < 3; check++) {
+        try {
+          if (!isLocked()) await pack.configure({ locked: true });
+          await new Promise((resolve) => setTimeout(resolve, 300));
+          if (isLocked()) break;
+        } catch (error) { console.warn(`${MODULE_ID} | Could not relock ${packName}:`, error); break; }
+      }
     }
   }
 }
