@@ -686,6 +686,7 @@ async function populateCompendium(packName, items) {
           if (isLocked()) break;
         } catch (error) { console.warn(`${MODULE_ID} | Could not relock ${packName}:`, error); break; }
       }
+      if (!isLocked()) console.warn(`${MODULE_ID} | ${packName} is still unlocked after the fill`);
     }
   }
 }
