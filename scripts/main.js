@@ -682,10 +682,17 @@ Hooks.once("init", () => {
 
 Hooks.once("ready", async () => {
   if (!game.user.isGM) return;
+  // With two GMs logged in (a co-GM, a second browser) only the active GM fills the packs, so two clients never unlock, fill and relock
+  // the same pack at once (the loser gets "You may not create documents in the locked compendium").
+  if (game.users.activeGM && game.users.activeGM !== game.user) return;
   console.log(`${MODULE_ID} | Populating quality compendiums...`);
 
   for (const [packName, items] of Object.entries(QUALITIES)) {
-    await populateCompendium(packName, items);
+    try {
+      await populateCompendium(packName, items);
+    } catch (error) {
+      console.error(`${MODULE_ID} | Could not fill ${packName}:`, error);
+    }
   }
 
   console.log(`${MODULE_ID} | Done`);
